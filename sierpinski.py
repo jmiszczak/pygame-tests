@@ -38,7 +38,8 @@ def draw_sierpinski_triangel(screen, position, length, depth):
 
 def draw_sierpinski_square(screen, position, length, depth):
     if depth: 
-        color = (rnd.randint(0,255),rnd.randint(0,255),rnd.randint(0,255))
+        #color = (rnd.randint(0,255),rnd.randint(0,255),rnd.randint(0,255))
+        color = (0, 255, 0)
         rect = (position, (length, length))
         pg.draw.rect(screen, color, rect, 1)
         draw_sierpinski_square(screen, position, length/3, depth-1)
@@ -64,7 +65,7 @@ while not finish:
             elif event.key == pg.K_s:
                 draw_sierpinski_square(screen, (0,0), dim, 5)
             elif event.key == pg.K_t:
-                draw_sierpinski_triangel(screen, (0,0), dim, 6)
+                draw_sierpinski_triangel(screen, (0,0), dim, 7)
             elif event.key == pg.K_c:
                 # clear the screen
                 screen.fill((0,0,0))
