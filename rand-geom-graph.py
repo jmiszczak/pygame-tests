@@ -8,6 +8,7 @@ Created on Sun Mar 15 16:26:15 2020
 #%%
 import pygame as pg
 import sys
+import time
 
 import numpy as np
 import numpy.random as rnd
@@ -28,7 +29,7 @@ def get_geom_graph(screen):
     pos = {i: (rnd.randint(1, screen.get_size()[0]), rnd.randint(1,
         screen.get_size()[1])) for i in range(n+1)}
     rad = 2*(np.sqrt(screen.get_size()[0]) + np.sqrt(screen.get_size()[1]))
-    g = nx.random_geometric_graph(n, 75, pos=pos)
+    g = nx.random_geometric_graph(n, rad, pos=pos)
     return g
 
 
@@ -50,6 +51,7 @@ def draw_geom_graph(screen, graph):
         start_position = tuple(graph.nodes[e[0]]['pos'])
         end_position = tuple(graph.nodes[e[1]]['pos'])
         pg.draw.line(screen, color, start_position, end_position, 1)
+        time.sleep(0.005)
         pg.display.update()
 
 
@@ -68,6 +70,8 @@ while not finish:
                 # draw new graph
                 g = get_geom_graph(screen)
                 draw_geom_graph(screen, g)
+            if event.key == pg.K_f:
+                pg.display.toggle_fullscreen()
             elif event.key == pg.K_q:
                 # quit after pressing Q
                 finish = True
