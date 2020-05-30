@@ -1,8 +1,10 @@
 import sys
+import time
 
 import networkx as nx
 import random as rnd
 import pygame as pg
+import numpy as np
 
 # game board
 board = [
@@ -12,6 +14,9 @@ board = [
         "HFFG"
         ]
 
+RED = (255,0,0)
+GREEN = (0,255,0)
+BLUE = (0,0,255)
 # grid for playing
 grid = nx.grid_2d_graph(4,4)
 for n in grid.nodes:
@@ -20,7 +25,7 @@ for n in grid.nodes:
 # learning settings
 #
 rate = 1
-gamma = 0.1
+gamma = 0.5
 episode = 0
 # Q table
 Q = {}
@@ -68,15 +73,14 @@ def draw_board(screen):
     img = font.render('episode:' + str(episode), True, (0,0,255))
     screen.blit(img, (20, 20))
     pg.display.update()
-
+    
     x,y = int(screen_size[0]/4), int(screen_size[1]/4)
     for e in grid.edges:
-        color = (0,255,0)
         spos = ( int((0.5+e[0][0])*x), int((0.5+e[0][1])*y) )
         epos = ( int((0.5+e[1][0])*x), int((0.5+e[1][1])*y) )
-        pg.draw.circle(screen, color, spos, 5)
-        pg.draw.circle(screen, color, epos, 5)
-        pg.draw.line(screen, color, spos, epos, int(Q[e]))
+        pg.draw.circle(screen, RED, spos, 10)
+        pg.draw.circle(screen, RED, epos, 10)
+        pg.draw.line(screen, BLUE, spos, epos, int(32*Q[e]))
     pg.display.update()
 
 #%%
@@ -104,6 +108,7 @@ while not finish:
                 for _ in range(500):
                     single_episode()
                     draw_board(screen)
+                    time.sleep(0.05)
             elif event.key == pg.K_e:
                 if episode == 0:
                     restart_agent()
