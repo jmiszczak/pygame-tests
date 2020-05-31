@@ -33,7 +33,7 @@ rate = 1
 gamma = 0.5
 episode = 0
 batch_episodes = 50
-# Q table
+# Q table is indexed by the edges
 Q = {}
 
 def restart_agent():
@@ -56,6 +56,7 @@ def single_episode():
     #print("[INFO] Episode", ep)
     while play:
         # get one of the neighbors
+        # they are selected uniformly random
         old_state = state
         new_state = rnd.choice(list(grid.neighbors(old_state)))
         state = new_state
@@ -66,10 +67,14 @@ def single_episode():
             play = False
             if ls == 'G':
                 reward = 1
+
+        # update values in the Q table
+        # based on https://en.wikipedia.org/wiki/Q-learning
         Q[(old_state,new_state)] = Q[(old_state,new_state)] \
                 + rate*(reward + gamma * max(Q[(new_state,nn)] for nn in grid.neighbors(new_state)) \
                             - Q[(old_state,new_state)])
     
+    # display current values in Q table 
     print("Episode", episode)
     for e in grid.edges:
         print('Edged', e, 'has Q value', Q[e])
@@ -84,11 +89,13 @@ def line_size(qval):
 # illustration of the Frozen Lake
 def draw_board(screen):
     
-    x,y = int(screen_size[0]/4), int(screen_size[1]/4)
+    # filed size is based on the selected font
     field_size = font_size + 8
-    font = pg.font.SysFont(None, font_size)
  
-    # draw lines  between the fields to illustrate the connectivity
+    # calculate screen coordinates 
+    x,y = int(screen_size[0]/4), int(screen_size[1]/4)
+    
+    # draw lines between the fields to illustrate the connectivity
     for e in grid.edges:
         spos = ( int((0.5+e[0][0])*x), int((0.5+e[0][1])*y) )
         epos = ( int((0.5+e[1][0])*x), int((0.5+e[1][1])*y) )
@@ -96,8 +103,8 @@ def draw_board(screen):
 
     # display filed name
     for n in grid.nodes:
-        npos = ( int((0.5+n[1])*x-font_size/4), int((0.5+n[0])*x-font_size/4) )
-        rpos = ( int((0.5+n[1])*x-field_size/2), int((0.5+n[0])*x-field_size/2) )
+        npos = ( int((0.5+n[1])*x-font_size/4), int((0.5+n[0])*y-font_size/4) )
+        rpos = ( int((0.5+n[1])*x-field_size/2), int((0.5+n[0])*y-field_size/2) )
         if grid.nodes[n]['s'] in ['S'] :
             img = font.render(grid.nodes[n]['s'], True, (255,0,255))
         else :
@@ -105,28 +112,36 @@ def draw_board(screen):
         pg.draw.rect(screen, field_color[grid.nodes[n]['s']], pg.Rect(rpos,(field_size,field_size)), 0)
         screen.blit(img, npos)
 
-
+    # redraw
     pg.display.update()
 
 # redraw lines according to Q table
 def update_board(screen):
 
+    # update episode information
     screen.fill((255,255,255))
     font = pg.font.SysFont(None, font_size)
     img = font.render('Current episode: ' + str(episode), True, (0,0,255))
     screen.blit(img, (20, 20))
     pg.display.update()
     
-    x,y = int(screen_size[0]/4), int(screen_size[1]/4)
+    # calculate screen coordinates 
+    x, y = int(screen_size[0]/4), int(screen_size[1]/4)
+    
+    # add lines visualizing Q values
     for e in grid.edges:
         spos = ( int((0.5+e[0][1])*x), int((0.5+e[0][0])*y) )
         epos = ( int((0.5+e[1][1])*x), int((0.5+e[1][0])*y) )
         pg.draw.line(screen, LINE, spos, epos, line_size(Q[e])) 
+    
+    # draw the fields
     draw_board(screen)
+
+    # redraw
     pg.display.update()
 
 #
-# PyGame screen initialization
+# screen initialization
 #
 pg.init()
 screen_size = (800, 800) 
@@ -180,8 +195,5 @@ while not finish:
                 # draw clear board
                 screen.fill((255,255,255))
                 draw_board(screen)
-                pg.display.update()
-         
-    pg.display.update()
 
 sys.exit()
