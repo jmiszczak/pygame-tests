@@ -14,9 +14,14 @@ board = [
         "HFFG"
         ]
 
-RED = (255,0,0)
-GREEN = (0,255,0)
-BLUE = (0,0,255)
+RED = (255,0,0,64)
+GREEN = (0,255,0,128)
+BLUE = (0,0,255,128)
+YELLOW = (255,255,0,0) 
+LINE = (82,82,82,128)
+field_color = { 'S': YELLOW, 'G': GREEN, 'F' : BLUE, 'H' : RED }
+font_size = 32
+
 # grid for playing
 grid = nx.grid_2d_graph(4,4)
 for n in grid.nodes:
@@ -27,10 +32,12 @@ for n in grid.nodes:
 rate = 1
 gamma = 0.5
 episode = 0
+batch_episodes = 50
 # Q table
 Q = {}
 
 def restart_agent():
+    global episode 
     episode = 0
     for e in grid.edges:
         Q[e] = 0
@@ -65,34 +72,82 @@ def single_episode():
     
     print("Episode", episode)
     for e in grid.edges:
-        print(e, Q[e])
+        print('Edged', e, 'has Q value', Q[e])
 
+# visualization of the current value in Q table 
+def line_size(qval):
+    if qval > 0.0:
+        return int(3*(6+np.log2(qval)))
+    else:
+        return 0
+
+# illustration of the Frozen Lake
 def draw_board(screen):
+    
+    x,y = int(screen_size[0]/4), int(screen_size[1]/4)
+    field_size = font_size + 8
+    font = pg.font.SysFont(None, font_size)
+ 
+    # draw lines  between the fields to illustrate the connectivity
+    for e in grid.edges:
+        spos = ( int((0.5+e[0][0])*x), int((0.5+e[0][1])*y) )
+        epos = ( int((0.5+e[1][0])*x), int((0.5+e[1][1])*y) )
+        pg.draw.line(screen, (128,128,128,128), spos, epos, 0)
 
-    font = pg.font.SysFont(None, 24)
-    img = font.render('episode:' + str(episode), True, (0,0,255))
+    # display filed name
+    for n in grid.nodes:
+        npos = ( int((0.5+n[1])*x-font_size/4), int((0.5+n[0])*x-font_size/4) )
+        rpos = ( int((0.5+n[1])*x-field_size/2), int((0.5+n[0])*x-field_size/2) )
+        if grid.nodes[n]['s'] in ['S'] :
+            img = font.render(grid.nodes[n]['s'], True, (255,0,255))
+        else :
+            img = font.render(grid.nodes[n]['s'], True, (255,255,255))
+        pg.draw.rect(screen, field_color[grid.nodes[n]['s']], pg.Rect(rpos,(field_size,field_size)), 0)
+        screen.blit(img, npos)
+
+
+    pg.display.update()
+
+# redraw lines according to Q table
+def update_board(screen):
+
+    screen.fill((255,255,255))
+    font = pg.font.SysFont(None, font_size)
+    img = font.render('Current episode: ' + str(episode), True, (0,0,255))
     screen.blit(img, (20, 20))
     pg.display.update()
     
     x,y = int(screen_size[0]/4), int(screen_size[1]/4)
     for e in grid.edges:
-        spos = ( int((0.5+e[0][0])*x), int((0.5+e[0][1])*y) )
-        epos = ( int((0.5+e[1][0])*x), int((0.5+e[1][1])*y) )
-        pg.draw.circle(screen, RED, spos, 10)
-        pg.draw.circle(screen, RED, epos, 10)
-        pg.draw.line(screen, BLUE, spos, epos, int(32*Q[e]))
+        spos = ( int((0.5+e[0][1])*x), int((0.5+e[0][0])*y) )
+        epos = ( int((0.5+e[1][1])*x), int((0.5+e[1][0])*y) )
+        pg.draw.line(screen, LINE, spos, epos, line_size(Q[e])) 
+    draw_board(screen)
     pg.display.update()
 
-#%%
+#
+# PyGame screen initialization
+#
 pg.init()
-
-width, height = 800, 600
-screen_size = (width, height) 
+screen_size = (800, 800) 
 screen = pg.display.set_mode(screen_size)
 pg.display.set_caption("Frozen Lake Demo")
 screen.fill((255,255,255))
-finish = False
 
+#
+# welcome screen 
+#
+font = pg.font.SysFont(None, font_size)
+img1 = font.render('Keyboard controls', True, BLUE)
+img2 = font.render('p: play ' + str(batch_episodes) + ' episodes, e: play single episode, r: restart, q:quit', True, BLUE)
+screen.blit(img1, (20, 20))
+screen.blit(img2, (20, 20+font_size))
+pg.display.update()
+
+#
+# main loop
+#
+finish = False
 while not finish:
     for event in pg.event.get():
         if event.type == pg.QUIT:
@@ -104,25 +159,29 @@ while not finish:
                 # quit after pressing Q
                 finish = True
             elif event.key == pg.K_p:
-                restart_agent()
-                for _ in range(500):
-                    single_episode()
-                    draw_board(screen)
-                    time.sleep(0.05)
-            elif event.key == pg.K_e:
+                screen.fill((255,255,255))
                 if episode == 0:
                     restart_agent()
-                single_episode()
-                draw_board(screen)
-            elif event.key == pg.K_r:
-                # clear the screen
-                restart_agent()
+                    draw_board(screen)
+                for _ in range(batch_episodes):
+                    single_episode()
+                    update_board(screen)
+                    time.sleep(0.01)
+            elif event.key == pg.K_e:
                 screen.fill((255,255,255))
+                if episode == 0:
+                    restart_agent()
+                    draw_board(screen)
+                single_episode()
+                update_board(screen)
+            elif event.key == pg.K_r:
+                # restart the agent
+                restart_agent()
+                # draw clear board
+                screen.fill((255,255,255))
+                draw_board(screen)
                 pg.display.update()
          
-#    color = (rnd.randint(0,255), rnd.randint(0,255), rnd.randint(0,255))
-#    position = (rnd.randint(1,screen_size[0]), rnd.randint(1, screen_size[1]))
-#    pg.draw.circle(screen, color, position, 5)
     pg.display.update()
 
 sys.exit()
