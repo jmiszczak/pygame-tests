@@ -18,9 +18,10 @@ RED = (255,0,0,64)
 GREEN = (0,255,0,128)
 BLUE = (0,0,255,128)
 YELLOW = (255,255,0,0) 
-LINE = (82,82,82,128)
+LINE = (255,0,0)
 field_color = { 'S': YELLOW, 'G': GREEN, 'F' : BLUE, 'H' : RED }
 font_size = 32
+field_size = font_size + 8
 
 # grid for playing
 grid = nx.grid_2d_graph(4,4)
@@ -79,19 +80,26 @@ def single_episode():
     for e in grid.edges:
         print('Edged', e, 'has Q value', Q[e])
 
-# visualization of the current value in Q table 
-def line_size(qval):
-    if qval > 0.0:
-        return int(3*(6+np.log2(qval)))
+# two methods for the visualization of the current value in Q table
+# method 1: line width - problematic for small values
+def line_size(qval, Q):
+    q_vals = list(set(Q.values()))
+    q_vals.sort()
+    if qval > 0 :
+        return 3*q_vals.index(qval)
     else:
+        return 1
+
+# method 2: alpha in the color specification
+def line_alpha(qval):
+    if qval > 0 :
+        return 64+(255-64)*qval
+    else :
         return 0
 
 # illustration of the Frozen Lake
 def draw_board(screen):
     
-    # filed size is based on the selected font
-    field_size = font_size + 8
- 
     # calculate screen coordinates 
     x,y = int(screen_size[0]/4), int(screen_size[1]/4)
     
@@ -101,7 +109,7 @@ def draw_board(screen):
         epos = ( int((0.5+e[1][0])*x), int((0.5+e[1][1])*y) )
         pg.draw.line(screen, (128,128,128,128), spos, epos, 0)
 
-    # display filed name
+    # display field name
     for n in grid.nodes:
         npos = ( int((0.5+n[1])*x-font_size/4), int((0.5+n[0])*y-font_size/4) )
         rpos = ( int((0.5+n[1])*x-field_size/2), int((0.5+n[0])*y-field_size/2) )
@@ -116,7 +124,7 @@ def draw_board(screen):
     pg.display.update()
 
 # redraw lines according to Q table
-def update_board(screen):
+def update_board(screen, alpha=True):
 
     # update episode information
     screen.fill((255,255,255))
@@ -127,13 +135,32 @@ def update_board(screen):
     
     # calculate screen coordinates 
     x, y = int(screen_size[0]/4), int(screen_size[1]/4)
-    
+   
     # add lines visualizing Q values
-    for e in grid.edges:
-        spos = ( int((0.5+e[0][1])*x), int((0.5+e[0][0])*y) )
-        epos = ( int((0.5+e[1][1])*x), int((0.5+e[1][0])*y) )
-        pg.draw.line(screen, LINE, spos, epos, line_size(Q[e])) 
-    
+    if not alpha:
+        # method 1: Q values used to calculate line width
+        for e in grid.edges:
+            spos = ( int((0.5+e[0][1])*x), int((0.5+e[0][0])*y) )
+            epos = ( int((0.5+e[1][1])*x), int((0.5+e[1][0])*y) )
+            pg.draw.line(screen, LINE, spos, epos, line_size(Q[e], Q)) 
+    else :
+        # method 2: Q values used to change alpha of the lines
+        for e in grid.edges:
+            spos = ( int((0.5+e[0][1])*x)-(line_size(Q[e],Q)-1)/2,
+                    int((0.5+e[0][0])*y)-(line_size(Q[e],Q)-1)/2)
+            epos = ( int((0.5+e[1][1])*x)-(line_size(Q[e],Q)-1)/2,
+                    int((0.5+e[1][0])*y)-(line_size(Q[e],Q)-1)/2)
+            if spos[0] == epos[0] : # horizontal line
+                line = pg.Surface((line_size(Q[e], Q), abs(spos[1]-epos[1])), pg.SRCALPHA)
+                line.fill( LINE + (line_alpha(Q[e]),))
+                screen.blit(line, spos)
+            elif spos[1] == epos[1] : # vertical line
+                line = pg.Surface((abs(spos[0]-epos[0]), line_size(Q[e], Q)), pg.SRCALPHA)
+                line.fill(LINE + (line_alpha(Q[e]), ))
+                screen.blit(line, spos)
+            else :
+                print ("[INFO] Problem with line coordinates.")
+
     # draw the fields
     draw_board(screen)
 
