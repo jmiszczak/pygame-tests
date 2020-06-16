@@ -20,8 +20,9 @@ BLUE = (0,0,255,128)
 YELLOW = (255,255,0,0) 
 LINE = (255,0,0)
 field_color = { 'S': YELLOW, 'G': GREEN, 'F' : BLUE, 'H' : RED }
-font_size = 32
-field_size = font_size + 8
+font_size = 40
+info_font_size = 22
+field_size = font_size + 25
 
 # grid for playing
 grid = nx.grid_2d_graph(4,4)
@@ -33,7 +34,7 @@ for n in grid.nodes:
 rate = 1
 gamma = 0.5
 episode = 0
-batch_episodes = 50
+batch_episodes = 10
 # Q table is indexed by the edges
 Q = {}
 
@@ -83,12 +84,20 @@ def single_episode():
 # two methods for the visualization of the current value in Q table
 # method 1: line width - problematic for small values
 def line_size(qval, Q):
-    q_vals = list(set(Q.values()))
-    q_vals.sort()
+    # q_vals = list(set(Q.values()))
+    # q_vals.sort()
+    # if qval > 0 :
+    #     return 3*q_vals.index(qval)
+    # else:
+    #     return 1
     if qval > 0 :
-        return 3*q_vals.index(qval)
-    else:
-        return 1
+        # we assume 10 possible line widths
+        q_vals = [ _/9 for _ in range(11) ]
+        # print(q_vals)
+        return 3*[q_vals.index(_) for _ in q_vals if _ > qval][0]
+    else :
+        return 0
+    
 
 # method 2: alpha in the color specification
 def line_alpha(qval):
@@ -128,9 +137,9 @@ def update_board(screen, alpha=True):
 
     # update episode information
     screen.fill((255,255,255))
-    font = pg.font.SysFont(None, font_size)
+    font = pg.font.SysFont(None, info_font_size)
     img = font.render('Current episode: ' + str(episode), True, (0,0,255))
-    screen.blit(img, (20, 20))
+    screen.blit(img, (10, 0.95*screen_size[1]))
     pg.display.update()
     
     # calculate screen coordinates 
@@ -171,7 +180,7 @@ def update_board(screen, alpha=True):
 # screen initialization
 #
 pg.init()
-screen_size = (800, 800) 
+screen_size = (500, 500) 
 screen = pg.display.set_mode(screen_size)
 pg.display.set_caption("Frozen Lake Demo")
 screen.fill((255,255,255))
@@ -180,10 +189,14 @@ screen.fill((255,255,255))
 # welcome screen 
 #
 font = pg.font.SysFont(None, font_size)
-img1 = font.render('Keyboard controls', True, BLUE)
-img2 = font.render('p: play ' + str(batch_episodes) + ' episodes, e: play single episode, r: restart, q:quit', True, BLUE)
-screen.blit(img1, (20, 20))
-screen.blit(img2, (20, 20+font_size))
+imgs = [ font.render('Keyboard controls', True, BLUE),
+        font.render('p: play ' + str(batch_episodes) + ' episodes', True, BLUE),
+        font.render('e: play single episode', True, BLUE),
+        font.render('r: restart', True, BLUE),
+        font.render('q: quit', True, BLUE)
+        ]
+for i, img in enumerate(imgs):
+    screen.blit(img, (20, 20+i*1.5*info_font_size))
 pg.display.update()
 
 #
