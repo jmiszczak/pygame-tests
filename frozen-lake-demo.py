@@ -9,9 +9,9 @@ import numpy as np
 # game board
 board = [
         "SFFF",
-        "FHFH",
-        "FFFH",
-        "HFFG"
+        "FHHF",
+        "FHHF",
+        "GFFF"
         ]
 
 RED = (255,0,0,64)
@@ -113,9 +113,11 @@ def draw_board(screen):
     x,y = int(screen_size[0]/4), int(screen_size[1]/4)
     
     # draw lines between the fields to illustrate the connectivity
+    # NOTE: this is not used as the line width is set to zero
     for e in grid.edges:
         spos = ( int((0.5+e[0][0])*x), int((0.5+e[0][1])*y) )
         epos = ( int((0.5+e[1][0])*x), int((0.5+e[1][1])*y) )
+        # change 0 to 1 to see lines
         pg.draw.line(screen, (128,128,128,128), spos, epos, 0)
 
     # display field name
@@ -169,6 +171,20 @@ def update_board(screen, alpha=True):
                 screen.blit(line, spos)
             else :
                 print ("[INFO] Problem with line coordinates.")
+
+            # add values for reversed edges
+            e = tuple(reversed(e))
+            if spos[0] == epos[0] : # horizontal line
+                line = pg.Surface((line_size(Q[e], Q), abs(spos[1]-epos[1])), pg.SRCALPHA)
+                line.fill( LINE + (line_alpha(Q[e]),))
+                screen.blit(line, spos)
+            elif spos[1] == epos[1] : # vertical line
+                line = pg.Surface((abs(spos[0]-epos[0]), line_size(Q[e], Q)), pg.SRCALPHA)
+                line.fill( LINE + (line_alpha(Q[e]),))
+                screen.blit(line, spos)
+            else :
+                print ("[INFO] Problem with line coordinates.")
+
 
     # draw the fields
     draw_board(screen)
