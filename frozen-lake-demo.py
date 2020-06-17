@@ -1,3 +1,7 @@
+# Visualization of Q-learning algorithm for the Frozen Lake game
+# Author: Jarosław Miszczak <jarek@miszczak.eu>
+# NOTE: To run this script you need to install networkx and pygame
+
 import sys
 import time
 
@@ -10,10 +14,11 @@ import numpy as np
 board = [
         "SFFF",
         "FHHF",
-        "FHHF",
-        "GFFF"
+        "FFHF",
+        "HFFG"
         ]
 
+# colors and fonts
 RED = (255,0,0,64)
 GREEN = (0,255,0,128)
 BLUE = (0,0,255,128)
@@ -30,14 +35,18 @@ for n in grid.nodes:
     grid.nodes[n]['s'] = board[n[0]][n[1]]
 
 # learning settings
-#
+# NOTE: only random exploration is implemented
+# 
 rate = 1
 gamma = 0.5
 episode = 0
-batch_episodes = 10
+max_steps = 100
+batch_episodes = 100
+
 # Q table is indexed by the edges
 Q = {}
 
+# restart - clear the Q table and episode counter
 def restart_agent():
     global episode 
     episode = 0
@@ -45,6 +54,7 @@ def restart_agent():
         Q[e] = 0
         Q[tuple(reversed(e))] = 0
 
+# play single episode of the game
 def single_episode():
     global episode
     episode = episode + 1
