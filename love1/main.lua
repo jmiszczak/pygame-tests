@@ -8,17 +8,24 @@ canShootTimer = canShootTimerMax
 bulletImg = nil
 bullets = {}
 
+-- enemies
 createEnemyTimerMax = 0.4
 createEnemyTimer = createEnemyTimerMax
 enemyIimg = nil
 enemies = {}
 
+-- status
+isAlive = true -- are you still there
+score = 0 -- how many enemies were shot
+
+-- function for loading assets
 function love.load(arg)
   player.img = love.graphics.newImage('assets/plane.png')
   bulletImg = love.graphics.newImage('assets/bullet.png')
   enemyImg = love.graphics.newImage('assets/enemy.png')
 end
 
+-- main functionality
 function love.update(dt)
   canShootTimer = canShootTimer - (1 * dt)
   if canShootTimer < 0 then
@@ -45,17 +52,16 @@ function love.update(dt)
     canShoot = false
     canShootTimer = canShootTimerMax
   end
-
- for i, bullet in ipairs(bullets) do
-   bullet.y = bullet.y - (250*dt)
-   if bullet.y < 0 then
-     table.remove(bullets, i)
-   end
- end
+  for i, bullet in ipairs(bullets) do
+    bullet.y = bullet.y - (250*dt)
+    if bullet.y < 0 then
+      table.remove(bullets, i)
+    end
+  end
 
   createEnemyTimer = createEnemyTimer - (1 * dt)
   if createEnemyTimer < 0 then
-	  createEnemyTimer = createEnemyTimerMax
+    createEnemyTimer = createEnemyTimerMax
 	  randomNumber = math.random(10, love.graphics.getWidth() - 10)
 	  newEnemy = { x = randomNumber, y = -10, img = enemyImg }
 	  table.insert(enemies, newEnemy)
@@ -68,11 +74,62 @@ function love.update(dt)
   		table.remove(enemies, i)
   	end
   end
+
+
+  for i, enemy in ipairs(enemies) do
+    for j, bullet in ipairs(bullets) do
+      if CheckCollision(enemy.x, enemy.y, 
+        enemy.img:getWidth(), enemy.img:getHeight(), 
+        bullet.x, bullet.y, 
+        bullet.img:getWidth(), bullet.img:getHeight()) then
+        table.remove(bullets, j)
+        table.remove(enemies, i)
+        score = score + 1
+      end
+    end
+
+    if CheckCollision(enemy.x, enemy.y, 
+      enemy.img:getWidth(), enemy.img:getHeight(), 
+      player.x, player.y, 
+      player.img:getWidth(), player.img:getHeight()) 
+      and isAlive then
+        table.remove(enemies, i)
+        isAlive = false
+    end
+  end
+  
+  if not isAlive and love.keyboard.isDown('r') then
+	  -- remove all our bullets and enemies from screen
+	  bullets = {}
+	  enemies = {}
+
+	  -- reset timers
+	  canShootTimer = canShootTimerMax
+	  createEnemyTimer = createEnemyTimerMax
+
+	  -- move player back to default position
+	  player.x = 50
+	  player.y = 710
+
+	  -- reset our game state
+	  score = 0
+	  isAlive = true
+end
+
+
 end
 
 function love.draw(dt)
   -- love.graphics.print("Hello World!", 400, 300)
-  love.graphics.draw(player.img,player.x,player.y)
+  if isAlive then
+	  love.graphics.draw(player.img, player.x, player.y)
+  else
+	  love.graphics.print("Press 'R' to restart",
+      love.graphics:getWidth()/2-50, love.graphics:getHeight()/2-10)
+	  love.graphics.print("Your score:" .. score,
+      love.graphics:getWidth()/2-40, love.graphics:getHeight()/2+10)
+  end
+  -- love.graphics.draw(player.img,player.x,player.y)
   for i, bullet in ipairs(bullets) do
     love.graphics.draw(bullet.img, bullet.x, bullet.y)
   end
