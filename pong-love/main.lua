@@ -2,6 +2,7 @@
 playerLeft = { x = 50, y = 100, speed = 150, img = nil }
 playerRight = { x = 720, y = 200, speed = 150, img = nil }
 ball = { x = 400, y = 300, speedX = 150, speedY = 150, img = nil }
+gameOn = true
 
 -- load assets
 function love.load(arg)
@@ -45,14 +46,24 @@ function love.update(dt)
   end
 
   -- ball movements
+  
   if ball.x < 0 or ball.x > love.graphics.getWidth() - ball.img:getWidth()  then
-    ball.speedX = -1*ball.speedX
+    gameOn = false
   end
+  
 
+  if CheckCollision(ball.x, ball.y, ball.img:getWidth(), ball.img:getHeight(), 
+      playerLeft.x, playerLeft.y, playerLeft.img:getWidth(), playerLeft.img:getHeight()) 
+      or 
+      CheckCollision(ball.x, ball.y, ball.img:getWidth(), ball.img:getHeight(), 
+      playerRight.x, playerRight.y, playerRight.img:getWidth(), playerRight.img:getHeight()) 
+      then
+      ball.speedX = -1*ball.speedX
+  end
+ 
   if ball.y < 0 or ball.y > love.graphics.getHeight() - ball.img:getHeight()  then
     ball.speedY = -1*ball.speedY
   end
-
 
   ball.x = ball.x + ball.speedX*dt
   ball.y = ball.y + ball.speedY*dt
@@ -61,12 +72,14 @@ end
 
 -- redraw the screen
 function love.draw(dt)
-
   love.graphics.draw(courtImg, 0,0 )
   love.graphics.draw(ball.img, ball.x, ball.y)
   love.graphics.draw(playerLeft.img, playerLeft.x, playerLeft.y)
   love.graphics.draw(playerRight.img, playerRight.x, playerRight.y)
 
+  if not gameOn then  
+    love.graphics.print("You lost!", 370, 100)
+  end
 end
 
 -- basic checking for collisions
