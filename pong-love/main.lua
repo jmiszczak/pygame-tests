@@ -1,7 +1,9 @@
 -- two players and one ball
-playerLeft = { x = 50, y = 100, speed = 150, img = nil }
-playerRight = { x = 720, y = 200, speed = 150, img = nil }
+playerLeft = { x = 50, y = 100, speed = 150, score = 0, img = nil }
+playerRight = { x = 720, y = 200, speed = 150, score = 0, img = nil }
 ball = { x = 400, y = 300, speedX = 150, speedY = 150, img = nil }
+-- some extras
+font = love.graphics.newFont("assets/Roboto-Black.ttf", 48)
 gameOn = true
 
 -- load assets
@@ -53,11 +55,15 @@ function love.update(dt)
   
 
   if CheckCollision(ball.x, ball.y, ball.img:getWidth(), ball.img:getHeight(), 
-      playerLeft.x, playerLeft.y, playerLeft.img:getWidth(), playerLeft.img:getHeight()) 
-      or 
-      CheckCollision(ball.x, ball.y, ball.img:getWidth(), ball.img:getHeight(), 
+      playerLeft.x, playerLeft.y, playerLeft.img:getWidth(), playerLeft.img:getHeight()) then
+      playerLeft.score = playerLeft.score + 1
+      ball.speedX = -1*ball.speedX
+  end
+
+  if CheckCollision(ball.x, ball.y, ball.img:getWidth(), ball.img:getHeight(), 
       playerRight.x, playerRight.y, playerRight.img:getWidth(), playerRight.img:getHeight()) 
       then
+      playerRight.score = playerRight.score + 1
       ball.speedX = -1*ball.speedX
   end
  
@@ -77,8 +83,11 @@ function love.draw(dt)
   love.graphics.draw(playerLeft.img, playerLeft.x, playerLeft.y)
   love.graphics.draw(playerRight.img, playerRight.x, playerRight.y)
 
-  if not gameOn then  
-    love.graphics.print("You lost!", 370, 100)
+  if gameOn then
+    love.graphics.print(playerLeft.score, font, 200, 10)
+    love.graphics.print(playerRight.score, font, 600, 10)
+  else
+    love.graphics.print("Game over!", font, 300, 100)
   end
 end
 
