@@ -9,19 +9,21 @@ matplotlib.use("Agg")
 t, s = [1, 2, 4], [1, 4/10, 8/10]
 t, v = [1, 2, 3], [2, 8, 14]
 def plot_data(time,dist, vel):
-    fig = figure.Figure(figsize=[3, 4], dpi=100)
+    fig = figure.Figure(figsize=[4, 3], dpi=100)
     fig.patch.set_alpha(0.1)
 
-    ax1 = fig.add_subplot(311)
-    # ax1.set_xlim([0, 100])
-    # ax1.set_ylim([0, 1000])
+    ax1 = fig.add_subplot(121)
+    ax1.set_xlim([0, 100])
+    ax1.set_ylim([0, 1000])
     ax1.plot(time,dist, color='red')
     ax1.set_title('Velocity v(t)')
 
-    ax2 = fig.add_subplot(313)
+    ax2 = fig.add_subplot(122)
     ax2.plot(time,vel, color='green')
     ax2.set_title('Distance s(t)')
-
+    ax2.set_xlim([0, 100])
+    ax2.set_ylim([0, 1000])
+ 
     canvas = agg.FigureCanvasAgg(fig)
     canvas.draw()
     renderer = canvas.get_renderer()
@@ -55,4 +57,4 @@ while not stop:
     pygame.display.flip()
     screen.fill(bg_color)
 
-    pygame.time.Clock().tick(1)  # Avoid 100% CPU usage
+    pygame.time.Clock().tick(11)  # Avoid 100% CPU usage
