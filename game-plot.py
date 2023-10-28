@@ -57,4 +57,4 @@ while not stop:
     pygame.display.flip()
     screen.fill(bg_color)
 
-    pygame.time.Clock().tick(11)  # Avoid 100% CPU usage
+    pygame.time.Clock().tick(10)  # Avoid 100% CPU usage
